@@ -1,0 +1,90 @@
+##################### PARAMETER THAT CAN BE CHANGED BETWEEN EXPERIMENTS #######################
+# Add parameter that you may want to change between experiments
+string language = "eng"; #language can be "eng" or "sv"
+
+##################### FILES THAT NEED TO BE INLCUDED #######################
+include "subroutines.pcl"; # This subroutine file allows us to present to the participant and driver screen and other subroutines
+
+begin; #beggining of our experiment
+
+
+##################### PORTS DEFINITIONS #######################
+# in the app to manage the exeriments, there are output ports. We need to know this
+# so that the output of the code goes to the correct output port of the system
+int myMEGport = 1;
+output_port MEGport = output_port_manager.get_port(myMEGport);
+output_port OPMport = output_port_manager.get_port(3);
+
+
+
+#Start presentation with default settings
+default.present();
+parameter_window.remove_all(); #clean everything
+
+##################### PREPARING YOUR EXPERIMENT #######################
+int exp_duration = 30; # Total time: 2 blocks, 5 minutes per block (300 seconds each) DECIDE YOUR LENGHT
+
+
+## Add definitions of resting state eyes open and eyes closed
+## this variable will hel us to control the block where we are, and thus, the corresponding intructions for the participant:
+# if RestingStates[1][1] = "Eyes open", then the participant will see these instructions: RestingStates[1][2] = "eyes open meanwhile, look at the cross,\n and sit still and relaxed"
+
+array<string> RestingStates[2][2];  # create empty array with two rows and one col
+RestingStates[1][1] = "Eyes open";  #assing values to the empty array
+RestingStates[2][1] = "Eyes closed";
+
+if language == "sv" then
+	RestingStates[1][2] = "ögonen öppna under tiden, titta på korset,\n och sitt stilla och avslappnat";
+	RestingStates[2][2] = "ögonen stängda och sitt stilla och avslappnat";
+else
+	RestingStates[1][2] = "eyes open meanwhile, look at the cross,\n and sit still and relaxed";
+	RestingStates[2][2] = "eyes closed and sit still and relaxed";
+end;
+
+
+
+################################## EXECUTING EXPERIMENT #########################################3
+
+###>> Resting state block ******************************************************************************************************
+loop int block=1; until block > 2 begin; # loop for the 2 blocks
+
+	# initial explanation of the experiment
+	if language == "sv" then
+		ShowInstructions(" Under kommande sex minuter kommer vi att mäta aktiviteten \n\n", "medans du vilar och gör ingenting särskilt \n\n", "Håll " + RestingStates[block][2]);
+	else
+		ShowInstructions(" For the next six minutes we will measure the activity \n\n", "while resting and doing nothing in particular \n\n", "Hold on " + RestingStates[block][2]);	
+	end;
+
+	p_Fixation.present(); #present fixation cross and wait for a button press, then add 5s before sending trigger
+	wait_interval(5000); 
+	
+	ShowAltText("Recording:", "resting state", RestingStates[block][1]); #showing in our screen the progress of the block
+	MEGport.send_code(16,40); # send "on" trigger
+	OPMport.send_code(16,40); # send "on" trigger
+	
+	#loop through the 5 minutes of the experiment. We need this to control that this does not run just one time, we need a loop until we reach exp_duration
+	loop int dsec=1; until dsec > exp_duration begin; # 30*10 sec = 5 min
+		wait_interval(10000);   #10 sec
+		MEGport.send_code(64,40); # send sync trigger
+		OPMport.send_code(64,40); # send "sync trigger
+
+		ShowAltText(" Block " + string(block), RestingStates[block][1], " status: " + string(dsec*10) + " / " + string(exp_duration*10));
+		
+
+		dsec=dsec+1; #sum seconds
+	end;
+	MEGport.send_code(32,40); # send "off" trigger
+	OPMport.send_code(32,40); # send "off" trigger
+	ShowAltText("Finished:", "resting state", RestingStates[block][1]);
+	
+	wait_interval(5000); #another wait interval (normally always after the triggers there is a wait interval)
+	
+	# set drivers screen to blank again
+	ShowAltText("", "", "");
+	
+	kss_routine("eng"); # when you finish 1 block you may want to ask the user the sleepiness
+	block = block + 1; # sum block
+end; # block loop	
+
+endOfTest.present();
+end;
