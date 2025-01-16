@@ -1,0 +1,23 @@
+Scenario - phalanges
+Logfile written - 04/25/2024 11:32:44
+
+Trial	Event Type	Code	Time	TTime	Uncertainty	Duration	Uncertainty	ReqTime	ReqDur	Stim Type	Pair Index
+
+1	Response	256	244951	239937	1
+2	Response	256	2981053	207818	1
+3	Quit		5667955	158705	NA
+
+
+{
+   "app": "Presentation Version 21.1 Build 09.05.19",
+   "device": "System manufacturer System Product Name",
+   "experiment": "{09163071-6D12-48F1-8D4F-A7E653C63D1C}",
+   "os": "Windows 7 64 bit",
+   "package": "",
+   "parameters": {
+      "configuration": "Default configuration"
+   },
+   "scenario": "phalanges.sce",
+   "subject": "",
+   "timestamp": "2024/04/25 09:23:14 GMT"
+}
