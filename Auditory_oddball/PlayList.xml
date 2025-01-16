@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AUDIOFILE_PLAYLIST>
+  <PLAYLIST1>
+    <Entry Folder="Audio Tracks" />
+    <Entry Code001="1_1000Hz3.wav" />
+    <Entry Code002="2_1200Hz3.wav" />
+    <Entry Code003="3_durationSound.wav" />
+    <Entry Code004="4_vowelSound.wav" />
+    <Entry Code005="5_m6intSound.wav" />
+    <Entry Code006="6_p6intSound.wav" />
+    <Entry Code007="7_m8pitchSound.wav" />
+    <Entry Code008="8_p8pitchSound.wav" />
+    <Entry Code009="9_m15pitchSound.wav" />
+    <Entry Code010="10_p15pitchSound.wav" />
+    <Entry Code011="11_standardSound.wav" />
+    <Entry Code021="AttendBottom.wav" />
+    <Entry Code022="AttendMiddle.wav" />
+    <Entry Code023="AttendTop.wav" />
+    <Entry Code024="ListenOnly.wav" />
+    <Entry Code025="PleaseRespond.wav" />
+    <Entry Code026="PleaseAttend.wav" />
+    <Entry Code027="cue_break.wav" />
+    <Entry Code028="cue_break_go_on.wav" />
+    <Entry Code029="cue_2voices_ascending.wav" />
+    <Entry Code030="cue_2voices_descending.wav" />
+    <Entry Code31="39_C4.wav" />
+    <Entry Code32="39_D4.wav" />
+    <Entry Code33="39_E4.wav" />
+    <Entry Code34="39_F4.wav" />
+    <Entry Code35="39_G4.wav" />
+    <Entry Code36="39_A4.wav" />
+    <Entry Code37="39_B4.wav" />
+    <Entry Code38="39_C5.wav" />
+    <Entry Code39="39_D5.wav" />
+    <Entry Code40="39_E5.wav" />
+    <Entry Code41="39_F5.wav" />
+    <Entry Code42="39_G5.wav" />
+    <Entry Code43="39_A5.wav" />
+    <Entry Code44="39_B5.wav" />
+    <Entry Code45="39_C6.wav" />
+    <Entry Code46="39_D6.wav" />
+    <Entry Code47="39_E6.wav" />
+    <Entry Code48="39_F6.wav" />
+    <Entry Code49="39_G6.wav" />
+    <Entry Code50="39_A6.wav" />
+    <Entry Code51="41_C4.wav" />
+    <Entry Code52="41_D4.wav" />
+    <Entry Code53="41_E4.wav" />
+    <Entry Code54="41_F4.wav" />
+    <Entry Code55="41_G4.wav" />
+    <Entry Code56="41_A4.wav" />
+    <Entry Code57="41_B4.wav" />
+    <Entry Code58="41_C5.wav" />
+    <Entry Code59="41_D5.wav" />
+    <Entry Code60="41_E5.wav" />
+    <Entry Code61="41_F5.wav" />
+    <Entry Code62="41_G5.wav" />
+    <Entry Code63="41_A5.wav" />
+    <Entry Code64="41_B5.wav" />
+    <Entry Code65="41_C6.wav" />
+    <Entry Code66="41_D6.wav" />
+    <Entry Code67="41_E6.wav" />
+    <Entry Code68="41_F6.wav" />
+    <Entry Code69="41_G6.wav" />
+    <Entry Code70="41_A6.wav" />
+    <Entry Code71="43_C4.wav" />
+    <Entry Code75="43_G4.wav" />
+    <Entry Code76="43_A4.wav" />
+    <Entry Code77="43_B4.wav" />
+    <Entry Code78="43_C5.wav" />
+    <Entry Code79="43_D5.wav" />
+    <Entry Code80="43_E5.wav" />
+    <Entry Code81="43_F5.wav" />
+    <Entry Code82="43_G5.wav" />
+    <Entry Code83="43_A5.wav" />
+    <Entry Code84="43_B5.wav" />
+    <Entry Code85="43_C6.wav" />
+    <Entry Code86="43_D6.wav" />
+    <Entry Code87="43_E6.wav" />
+    <Entry Code101="cue_low_ascending.wav" />
+    <Entry Code102="cue_low_descending.wav" />
+    <Entry Code103="cue_high_ascending.wav" />
+    <Entry Code104="cue_high_descending.wav" />
+    <Entry Code105="cue_wide_ascending.wav" />
+    <Entry Code106="cue_wide_descending.wav" />
+   
+  </PLAYLIST1>
+  <SYSTEM>
+    <Entry UseDigitalInputD0="FALSE" />
+    <Entry SwapChannels="FALSE" />
+    <Entry SDRAMTest="FALSE" />
+  </SYSTEM>
+</AUDIOFILE_PLAYLIST>

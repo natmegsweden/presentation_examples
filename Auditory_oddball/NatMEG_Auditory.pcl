@@ -1,0 +1,243 @@
+###################### PARAMETERS THAT CAN BE CHANGED BETWEEN EXPERIMENTS ##################################
+string PracticeYes = "y"; #y or n
+string language = "eng";# "eng" or "sv"
+
+
+###################### FILES THAT NEED TO BE INCLUDED ####################################################
+include "subroutines.pcl"; #needed functions or subroutines to run the experiment
+
+begin; # BEGGIN EXPERIMENT
+
+
+##################### PORTS DEFINITIONS ##############################################################
+int AFport = 2;
+int myMEGport = 1;
+output_port MEGport = output_port_manager.get_port(myMEGport);
+output_port OPMport = output_port_manager.get_port(3);
+output_port audiofile = output_port_manager.get_port(AFport);
+
+#Start presentation with default settings
+default.present();
+parameter_window.remove_all();
+
+
+
+
+################## PREPARNG THE EXPERIMENT ###########################################################
+
+# (1) Practice block
+
+int trialBlockLen = 4;  # number of oddballs in the trial block
+# open the .txt file where the practice trials are defined
+input_file PracticeRunFile = new input_file; 
+PracticeRunFile.open("NatMEG_Auditory_trial_practicerun.txt");
+# parse the file
+array<int> PracticeRunTrials[trialBlockLen][2]; # make an array with trialblocklen rows and 2 columns (with integers)
+array<string> PracticeRunTrials2[trialBlockLen][1];  # make an array with trialblocklen rows and 1 column (with strings)
+loop int r=1 until r> trialBlockLen begin
+	PracticeRunTrials[r][1] = PracticeRunFile.get_int(); # read all the columns from the practice file into the array
+	PracticeRunTrials[r][2] = PracticeRunFile.get_int();
+	PracticeRunTrials2[r][1] = PracticeRunFile.get_string();
+	r=r+1;
+end;
+PracticeRunFile.close(); #close file
+
+# (2) Experiment block
+
+int blockLen = 60;  #lenght
+input_file myfile = new input_file; 
+myfile.open("NatMEG_Auditory_trials.txt"); #open the file
+array<int> alltrials[blockLen][2]; #create the arrays
+array<string> alltrials2[blockLen][1];
+loop int r=1 until r> blockLen begin
+	alltrials[r][1] = myfile.get_int();
+	alltrials[r][2] = myfile.get_int();
+	alltrials2[r][1] = myfile.get_string();
+	r=r+1;
+end;
+myfile.close();
+
+###>> Trial handler *****************
+int NormalBeepTrigger = 1; #trigger code for normal beep (1 for sound onset)
+int NormalBeepSoundNum = 37; #1; sound number 37=39_B4 -> 987 Hz
+
+int OddballBeepTrigger = 3; #2#trigger code for no-go oddball (2 for no-go, 1 for sound onset)
+int LowOddballBeepSoundNum = 75; #2; sound number 75= 43_G4 -> 782 Hz 
+
+int GoOddballBeepTrigger = 5; # trigger code for go oddball (4 for go, 1 for sound onset)
+int HighOddballBeepSoundNum = 79; # sound number 79= 43_D5 -> 1173 Hz
+
+# ammount to add for high pitch
+int OddBallFrequencyHighTrigger = 8; # for both go and no-go oddball
+string ball_text = "go"; #defoult
+string ball_textTRIAL = "go"; #defoult
+
+string WhichOddball = "low"; # defoult; either "low" or "high"
+
+#750ms Stimulus duration, file duration is 950 but includes sound for 750 ms
+int ITI = 1250; #1250 ITI ms #for the wait intervals
+int beepTrigger = 0; #initialize
+int soundNum = 0; #initialize
+
+
+
+## this variable will hel us to control the block where we are, and thus, the corresponding intructions for the participant
+array<string> GoOddBallFrequency[2][2];  # create empty array with two rows and two col
+GoOddBallFrequency[1][1] = "high";  #assing values to the empty array
+GoOddBallFrequency[2][1] = "low";
+
+if language == "sv" then
+	GoOddBallFrequency[1][2] = "högre";  #assing values to the empty array in swedish in column 2
+	GoOddBallFrequency[2][2] = "lägre";
+else
+	GoOddBallFrequency[1][2] = "higher";  #assing values to the empty array in swedish in column 2
+	GoOddBallFrequency[2][2] = "lower";
+end;
+
+GoOddBallFrequency.shuffle();  # randomize order of High and Low as the go-oddball (lets hope this shuffels rows only)
+
+
+
+
+
+############################## START PRACTICE PART ####################################################################
+
+if PracticeYes == "y" then
+	loop int PracticeBlockCounts = 1; until PracticeBlockCounts > 2 begin; #loop through the practice blocks
+
+			#show instructions
+			if language == "sv" then
+				ShowInstructions("En kort övning innan experimentet startar \n\n", "Tryck på knappen när du hör den \n\n ", GoOddBallFrequency[PracticeBlockCounts][2] + " tonen");
+			else
+				ShowInstructions("A short exercise before the experiment starts \n\n", "Press the button when you hear the \n\n ", GoOddBallFrequency[PracticeBlockCounts][2] + " tone");
+			end;
+			
+
+			PracticeRunTrials.shuffle(); #shuffle the order and train lenght of the oddballs before starting the trial
+			PracticeRunTrials2.shuffle();
+
+			p_Fixation.present(); # show fixation cross
+
+			loop int MyCount=1; until MyCount > trialBlockLen begin #loop through all the trials of one blcok
+				
+				WhichOddball = PracticeRunTrials2[MyCount][1]; #take the oddball type
+				int TotalNormalBeeps = PracticeRunTrials[MyCount][2];
+				#comprare if the current odball is go or no go
+				if WhichOddball == GoOddBallFrequency[PracticeBlockCounts][1] then
+					ball_textTRIAL = "go";
+				else
+					ball_textTRIAL = "no-go";
+				end;
+				
+				# show progress in our screen
+				ShowAltText("Block: " + string(PracticeBlockCounts) + "  the go-oddball is " + GoOddBallFrequency[PracticeBlockCounts][1], "n of OddBalls: " + string(MyCount) + "/" + string(trialBlockLen), "Odball type: " + ball_textTRIAL);
+
+				# Present all normal beeps
+				loop int normalBeeps=1; until normalBeeps > (TotalNormalBeeps) begin
+					audiofile.send_code(NormalBeepSoundNum,80); #load sound
+					wait_interval(50); #wait 
+
+					audiofile.send_code(128,10); # play the sound
+
+					wait_interval(ITI); #Not random ITI
+					normalBeeps = normalBeeps + 1
+				end;
+				
+				#load the corresponding oddball sound
+				if WhichOddball == "low" then  #low oddball
+					soundNum = LowOddballBeepSoundNum;
+				else	#high odball
+					soundNum = HighOddballBeepSoundNum;
+				end;
+				
+				audiofile.send_code(soundNum,80); #load sound
+				wait_interval(50);		
+				audiofile.send_code(128,10); #trigger sound
+				wait_interval(ITI); #Not random ITI
+
+					#Update count
+				MyCount = MyCount+1;
+					
+			end; #trial loop
+			PracticeBlockCounts = PracticeBlockCounts + 1;	
+		end;	
+end;
+
+
+
+
+
+
+########################## START EXPERIMENT ######################################################################################
+# this loop is the same as the othe rone, but in this case we are interested in the recording so we send triggers to the MEG and OPM systems
+
+loop int block=1; until block > 2 begin;
+	alltrials.shuffle();
+	alltrials2.shuffle();
+	
+	kss_routine(language);
+
+	if language == "sv" then
+		ShowInstructions("Tryck på knappen när du hör den \n\n ", GoOddBallFrequency[block][2] + " tonen", " ");
+	else
+		ShowInstructions("Press the button when you hear the\n\n ", GoOddBallFrequency[block][2] + " tone", " ");
+	end;
+
+	p_Fixation.present(); #present fixation cross
+
+	loop int MyCount=1; until MyCount > blockLen begin
+		
+		WhichOddball = alltrials2[MyCount][1];
+		int TotalNormalBeeps = alltrials[MyCount][2];
+		
+		if WhichOddball == GoOddBallFrequency[block][1] then
+			ball_text = "go";
+			beepTrigger = GoOddballBeepTrigger;
+		else
+			ball_text = "no-go";
+			beepTrigger = OddballBeepTrigger;
+		end;
+		
+		ShowAltText("Block: " + string(block) + "  the go-oddball is " + GoOddBallFrequency[block][1], "n of OddBalls: " + string(MyCount) + "/" + string(blockLen), "Odball type: " + ball_text);
+
+		# Present normal beepp
+		loop int normalBeeps=1; until normalBeeps > (TotalNormalBeeps) begin
+			
+			audiofile.send_code(NormalBeepSoundNum,80); #load sound with normal beep sound num
+			wait_interval(50);
+			
+			MEGport.send_code(NormalBeepTrigger,40); # send predefined trigger
+			OPMport.send_code(NormalBeepTrigger,40); # send predefined trigger
+			audiofile.send_code(128,10); #trigger sound
+
+			wait_interval(ITI); #Not random ITI
+			normalBeeps = normalBeeps + 1
+		end;
+		
+		# Present oddball
+		if WhichOddball == "low" then  #low oddball
+			soundNum = LowOddballBeepSoundNum;
+			beepTrigger = beepTrigger + 0;
+		else	#high odball
+			beepTrigger = beepTrigger + OddBallFrequencyHighTrigger; # if the go-oddball is low, then the no-go oddball is high
+			soundNum = HighOddballBeepSoundNum;
+		end;
+			
+		audiofile.send_code(soundNum,80); #load sound
+		wait_interval(50);
+		MEGport.send_code(beepTrigger,40);   # send our updated beepTrigger
+		OPMport.send_code(beepTrigger,40); # send predefined trigger
+		audiofile.send_code(128,10); #trigger sound
+		wait_interval(ITI); #Not random ITI
+		
+		#Update count
+		MyCount = MyCount+1;
+		
+	end; #trial loop
+	block = block + 1;
+	
+end; # block loop
+kss_routine(language);	
+
+endOfTest.present();
+end;
