@@ -1,0 +1,91 @@
+begin;
+
+	##################### PORTS DEFINITIONS ##############################################################
+	term.print_line("Initiating ports");
+	output_port MEG_trigger_port = output_port_manager.get_port(1);
+	output_port pneumatic_port = output_port_manager.get_port(3);
+	output_port opm_trigger_port = output_port_manager.get_port(4);
+	wait_interval(500);
+	
+
+	################## PREPARNG THE EXPERIMENT ###########################################################
+
+	# in this experiment we have 5 cables inside the MEG that can be attached to the phalanges of the participant. The end
+	# of this cables (the part that is attached to the participant) can vibrate to generate a tactile sensation in the 
+	# participant's fingers. To activate the vibration, the system sends an impulse to the cable.
+	# To connect this prentation code to the system that controls the impulses to
+	# send to the corresponding cables, there are 5 different trigger codes: 2, 4, 8, 16 and 32. There is a paper 
+	# that shows a map explaining how to attach the cables and which trigger corresponds to which cable.
+	# Thus, in this code, we go over all the possible triggers to make each pahalange cable vibrate.
+
+	# This experiment just consists on sending the pulses iteratively (in a loop) to the participant's phalanges 
+	# to generate the tactile sensation and read the MEG data to detect the response of the brain related with the tactile sensation. 
+
+
+	## EXPERIMENT PARAMETERS
+	# initialized empty
+	int phalange_index; # variable to know 
+	
+	# initiatilized with fixed value
+	int ISI = 333; # ms
+	int n_breaks = 2; # number of breaks to ask for sleepiness
+	int n_phalanges = 5; # number of channels for stimulation of the phalanges (there are 5)
+	int n_trials = n_phalanges*300; # 300 per each phalange
+	int MEG_trigger_duration = 10; # ms #lenght fot the trigger
+	int pulse_length = 50; # ms #lenght for the trigger
+
+
+	# RIGHT HAND STIMULATION 1: index finger: back of middle phalange; 2: index finger: top phalange; 4: index finger: middle phalange; 8: index finger: bottom phalange; 16: thumb: top phalange
+	# SETUP: 1 = 1R, 2 = 2R, 3 = 3R, 4 = 1L, 5 = 2L
+	# this is the array to store all the possible triggers and then in the loop we will whose which one we use
+	array<int> phalange_array[2 * n_phalanges] = {2, 2, 4, 4, 8, 8, 16, 16, 32, 32}; 
+	phalange_array.shuffle(); # initial shuffle
+
+	#array<int> phalange_array[1] = {5}; ## for testing single stimulations
+	
+
+	
+	########################## START EXPERIMENT ######################################################################################
+	## EXPERIMENT LOOP
+	term.print("-------------\n BEGIN! Ask for sleepiness!\n-----------------\n");
+
+	break_trial.present(); # stimulus defined in .sce file to wait for an enter press
+	wait_interval(1000);
+	
+	loop int n_trial = 1 until n_trial > n_trials begin # loop through all the trials
+		
+		
+		# choose the phalange index
+		int mod_trial = mod(n_trial, phalange_array.count()); ## this computes the module of the division between n_trial and the lenght of the array phalange_array
+		
+		if mod_trial > 0 then
+			phalange_index = phalange_array[mod_trial];
+		else
+			phalange_index = phalange_array[phalange_array.count()]; # take the last element of the phalange_array
+			phalange_array.shuffle(); # reshuffle
+		end;
+		
+		# present trial
+		pneumatic_port.send_code(phalange_index, pulse_length); # send to the pneumatic port the corresponding trigger with a certain duration
+		MEG_trigger_port.send_code(phalange_index, MEG_trigger_duration); #send the same trigger to the MEG port
+		opm_trigger_port.send_code(phalange_index, MEG_trigger_duration); # send the same trigger to the OPM port
+
+		# show progress in the terminal of presentation	
+		term.print_line("Trial No.: " + string(n_trial) + "/" + string(n_trials) + ". Trigger sent to pneumatic port: " + string(phalange_index) + ". ISI: " + string(ISI) + " ms");
+		wait_interval(ISI);
+		
+		
+		## check for break when we are on the half of the experiment to ask for sleepiness
+		if mod(n_trial, n_trials / n_breaks) == 0
+		then
+			term.print("\n-------------\nBREAK! Ask for sleepiness!\n-----------------\n");
+			break_trial.present();
+			wait_interval(1000);
+		end;	
+		
+		## update
+		n_trial = n_trial + 1;
+	
+	end;
+
+end;
