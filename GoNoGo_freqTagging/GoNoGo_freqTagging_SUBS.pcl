@@ -1,0 +1,225 @@
+
+#-----------------------------WaitForAnyButtonpress---------------------------------
+sub WaitForAnyButtonpress
+begin
+  loop int iCountOld = response_manager.total_response_count();
+  until response_manager.total_response_count() > iCountOld
+  begin
+  end;
+end;
+
+
+#----------------------------Show info text (our screen)------------------------------------
+sub ShowAltText( string messageA, string messageB, string messageC )
+begin
+  t_Alt3La.set_caption( messageA );
+  t_Alt3La.redraw();
+  t_Alt3Lb.set_caption( messageB );
+  t_Alt3Lb.redraw();
+  t_Alt3Lc.set_caption( messageC );
+  t_Alt3Lc.redraw();
+  p_Alt3L.present();
+end;
+
+
+
+
+#----------------------------Show info text (participant's screen)------------------------------------
+sub ShowInstructions( string messageA, string messageB, string messageC )
+begin
+  t_Info3La.set_caption( messageA );
+  t_Info3La.redraw();
+  t_Info3Lb.set_caption( messageB );
+  t_Info3Lb.redraw();
+  t_Info3Lc.set_caption( messageC );
+  t_Info3Lc.redraw();
+  p_Info3L.present();
+  WaitForAnyButtonpress();
+end;
+
+
+########################################## PARTICIPANT'S SLEEPINESS #######################################
+
+# KSS
+string kss_file_name = "sub-" + logfile.subject() + "_task-" + "kss_" + 
+								"_" + date_time("yymmdd") + 
+								"_" + date_time("hhnnss") + ".tsv";
+output_file kss_data = new output_file;
+kss_data.open(kss_file_name);
+kss_data.print("subj" + "\t" +
+					"Type" + "\t" +
+					"date" + "\t" +
+					"time" + "\t" +
+					"response" + "\t" +
+					"rt" + "\n"
+					);
+kss_data.close();
+
+array<int> buttons[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+int kss_response;
+text kss_sv = new text;
+kss_sv.set_caption("Hur sömnig har du känt dig under de senaste 5 minuterna?\n" +
+							"1  -  Extremt pigg\n" +
+							"2  -  Mycket pigg\n" +
+							"3  -  Pigg\n" +
+							"4  -  Ganska pigg\n" +
+							"5  -  Varken pigg eller sömnig\n" +
+							"6  -  Lätt sömnig\n" +
+							"7  -  Sömnig men ej ansträngande vara vaken\n" +
+							"8  -  Sömnig och något ansträngande att vara vaken\n" +
+							"9  -  Mycket sömnig, mycket ansträngande att vara vaken\n    kämpar mot sömnen"
+						);
+						
+						
+kss_sv.set_font_size(36);
+kss_sv.set_align(0);
+kss_sv.load();
+
+picture kss_picture = new picture;
+
+text kss_en = new text;
+kss_en.set_caption("How sleepy have you felt during the past 5 minutes?\n" +
+							"1  -  Extremely alert\n" +
+							"2  -  Very alert\n" +
+							"3  -  Alert\n" +
+							"4  -  Rather alert\n" +
+							"5  -  Niether alert nor sleepy\n" +
+							"6  -  Some signs of sleepiness\n" +
+							"7  -  Sleepy, but no effort to keep awake\n" +
+							"8  -  Sleepy, but some effort to keep awake\n" +
+							"9  -  Very sleepy, great effort to keep awake,\n     fighting sleep"
+						);
+						
+						
+kss_en.set_font_size(36);
+kss_en.set_align(0);
+kss_en.load();
+
+trial kss = new trial;
+
+kss.set_duration(forever);
+kss.add_stimulus_event(kss_picture);
+kss.set_terminator_buttons(buttons);
+kss.set_all_responses(true);
+kss.set_max_responses(1);
+kss.set_type(first_response);
+int KSSresp;
+double kss_start;
+double KSSrespRT;
+
+sub 
+	kss_routine(string KSSlang)
+begin
+	wait_interval(500);
+	
+	if KSSlang == "sv" then
+		kss_picture.add_part(kss_sv, 0, 0);
+	else
+		kss_picture.add_part(kss_en, 0, 0);
+	end;
+	
+	kss_start = clock.time_double();
+	kss.present();
+	if (bool( response_manager.response_count() )) then
+		response_data last = response_manager.last_response_data();
+		KSSresp = last.code();
+		KSSrespRT = last.time_double();
+		term.print_line("KSS: " + string(KSSresp));
+	end;
+	kss_data.open_append(kss_file_name);
+		kss_data.print(logfile.subject() + "\t" +
+					   "kss" + "\t" +
+					   date_time("yymmdd") + "\t" +
+					   string(clock.time_dms()) + "\t" +
+					   string(KSSresp) + "\t" +
+					   string(KSSrespRT) + "\n"
+						);
+	kss_data.close();
+end;
+
+
+
+
+
+
+#-----------------------------WriteOutput-------------------
+#sub WriteToOutputFile(string sFile, string sStr)
+#begin
+  #OutputFile.open_append( sFile ); # append
+  #OutputFile.print( sStr );
+  #OutputFile.close();
+#end;
+
+# Create data
+#string data_file_name = "behavdata_" + userName + ".tsv";
+#output_file data = new output_file;
+#data.open(data_file_name);
+	#data.print( "subj" + "\t" +
+					#"date" + "\t" +
+					#"time" + "\t" +
+					#"trial" + "\t" +
+					#"trial_type" + "\t" +
+					#"time_elapsed\t" +
+					#"response" + "\t" +
+					#"rt" + "\t" +
+					#"correct" + "\n"
+					#);
+#data.close();
+
+#int resp;
+#double respRT;
+#string data_row;
+#int correct;
+
+#sub 
+	#LogData(int goCode)
+#begin
+	
+	#resp = 0;
+	#respRT = 0;
+	
+	# Needs fixing ###################
+	#if (bool( response_manager.response_count() )) then
+      #response_data last = response_manager.last_response_data();
+		#resp = last.code();
+		#respRT = last.time_double() - clock.time_double();
+		#Response_trigger_port.send_code(resp, 20); # Send trigger
+	#end;
+
+	#term.print_line("Response: " + string(resp));
+	#term.print_line("Response Time: " + string(respRT));
+	
+	#if resp == goCode then
+		#correct = 1;
+	#else
+		#correct = 0;
+	#end;
+	
+	#data_row = subjID + "\t" + projectName + "\t" + thisDate + "\t" + thisTime + 
+				  #"\t" + string(iTrial) + "\t" + trialStim + "\t" + string(clock.time_double( )) + "\t" +
+					#string(resp) + "\t" + string(respRT) + "\t" + string(correct);
+
+	#data.open_append(data_file_name);
+
+	#data.print(data_row + "\n");
+	#data.close();
+
+#end;
+
+#-----------------------------GetID------------------------------------
+#sub string GetID
+#begin
+	#string sKeyboardInput;
+	#loop bool bOK = false until bOK == true
+	#begin
+		#ShowAltText("Enter NatMEG subject ID (0001..9999): ", " ", "finish with [return]");
+		#system_keyboard.set_delimiter( '\n' );
+		#system_keyboard.set_max_length( 10 );
+		#system_keyboard.set_time_out( 10000 );
+		#sKeyboardInput = system_keyboard.get_input( p_Info3L, t_Info3Lb );
+		#if (is_int(sKeyboardInput) && int(sKeyboardInput)>=0 && int(sKeyboardInput)<=9999) then
+			#bOK = true;
+		#end
+	#end;
+	#return "NatMEG_" + sKeyboardInput;
+#end;

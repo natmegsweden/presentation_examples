@@ -1,0 +1,167 @@
+string language = "eng";# "eng" or "sv" # string to decide the language of the instructions
+
+######################### PARAMETERS ################################
+
+#ports
+output_port MEG_trigger_port = output_port_manager.get_port(1);
+output_port OPM_trigger_port = output_port_manager.get_port(2);
+output_port Response_trigger_port = output_port_manager.get_port(3);
+
+#variables
+int iISI =500; # wait interval time in ms
+int iNumberOfTrials = 120; # Total number of trials. Each trial has some go events (3 or 4) and then 1 noGo event. Thus, iNumberOfNOGoEvents = iNumberOfTrials
+int iTriggerDuration = 10; # duration in ms of the trigger we will send to the ports 
+int iTriggerGo = 1; # trigger code for a Go event
+int iTriggerNoGo = 2; # trigger code for a noGo event
+int iNumberOfFrames = int(1*120); #number of frames per each event: frames= sec * Fs
+int iTagFreqGo = 20; # frequency of the tagging for Go triangles
+int iTagFreqNoGo = 15; # frequency tagging of the noGo triangles
+int iBrightnessAmp = 128; #0-256
+int iBrightnessOffset = 128; #0-256
+string trialStim;
+int iBrightness;
+int noGoCounter = 0;
+int iTrial;
+
+
+######################## SUBROUTINES ################################
+include "GoNoGo_freqTagging_SUBS.pcl"; # Include all the subroutines
+
+
+######################## ARRAYS FOR THE PARADIGM ################################
+# array to determine the number of go events before the noGo event per each trial
+# 80% of the trials will have 3 or 4 Go events
+# 20% of the trials will have 2 Go events
+array <int> goInterval[0];
+loop int i =1 until i > int(0.4*double(iNumberOfTrials)) begin
+	goInterval.add(3);
+	goInterval.add(4);
+	i = i+1;
+end;
+loop int j =1 until j > int(0.2*double(iNumberOfTrials)) begin
+	goInterval.add(2);
+	j = j+1;
+end;
+
+goInterval.shuffle(); #shuffle for randomization
+
+
+# array to save ALL the events (go and noGo)
+array <string> trialList[0]; # list where all the events of each trial will be saved
+loop int iNoGo = 1 until iNoGo > iNumberOfTrials begin  
+	loop int iGo = 1 until iGo > goInterval[iNoGo] begin # add all the corresponding GO events using the previous array we have defined before (goInterval)
+		trialList.add("GO");
+		iGo = iGo + 1;
+	end;
+	trialList.add("NOGO"); # at the end, we add one noGo event to complete a trial
+	iNoGo = iNoGo + 1;
+end;
+
+
+
+# array of brightness
+# we will define a brightness value per each frame, based on a sinusoidal wave.
+# We can define an arrray for a Go event and one for a noGo event, in case we want different brightness or different frequency per each event type
+array <int> iBrightnessGo[iNumberOfFrames];
+array <int> iBrightnessNoGo[iNumberOfFrames];
+loop int iFrame = 1 until iFrame > iNumberOfFrames begin
+	iBrightnessGo[iFrame] = int(iBrightnessAmp*(sin(2*3.141*iTagFreqGo*iFrame/120)))+iBrightnessOffset; # sinus equation
+	iBrightnessNoGo[iFrame] = int(iBrightnessAmp*(sin(2*3.141*iTagFreqNoGo*iFrame/120)))+iBrightnessOffset;
+	iFrame = iFrame + 1;
+end;
+
+
+int iNumberOfEvents = trialList.count(); # total number of events (go and noGo)
+int iNumberOfGoEvents = iNumberOfEvents-iNumberOfTrials; #the total number of Go event is equal to TotalEvents - noGoEvents
+term.print_line("Total number of events: " + string(iNumberOfEvents));
+
+
+########################## EXPERIMENT ##############################
+noGoShape.set_line_color(0,0,0,0); # set the contour line color of the triangles to black (like the background) for all the experiment
+noGoShape.redraw();
+goShape.set_line_color(0,0,0,0);
+goShape.redraw();
+
+
+#ShowAltText(" ", "Stimulation in progress..", " "); # show progrss in our screen
+
+# Sleepiness question before starting
+kss_routine(language);
+# Show instructions to the participant
+ShowInstructions("You will see a sequence of triangles pointing upwards or downwards.\n" +
+					  "Most will point upwards.\n" +
+					  "Press a button on every trial when the triangle is pointing upwards.\n" +
+					  "Do not press when the triangle is pointing downwards.\n"
+							,"Ready to start?", " " );
+# show fixation cross
+p_fx.present();
+
+# loop of the experiment
+loop iTrial = 1 until iTrial > iNumberOfEvents begin #loop until the total number of events (go and noGo)
+
+	trialStim = trialList[iTrial]; # take the current event
+	
+	# show progress in our screen
+	#ShowAltText("Stimulation in progress..",
+	#				"Event num: "+string(iTrial)+"/"+string(iNumberOfEvents) + "\n" +
+	#				"Trial num: "+string(noGoCounter)+"/"+string(iNumberOfTrials),
+	#				trialStim);
+	#wait_interval(50);
+	
+	#freqTag loop in case it is a GO event
+	if trialStim == "GO" then 
+		goShape.set_fill_color(0,iBrightnessOffset,0,255); # set the initial fill color of the triangle to the offset value
+		goShape.redraw();
+		p_GO.present();
+		
+		MEG_trigger_port.send_code(iTriggerGo, iTriggerDuration); #send triggers
+		OPM_trigger_port.send_code(iTriggerGo, iTriggerDuration);
+		
+		loop int iFrame = 1 until iFrame > iNumberOfFrames begin #loop for the tagging through all the frames 
+			goShape.set_fill_color(0,iBrightnessGo[iFrame],0,255); # take the corresponding brightness value of that frame
+			goShape.redraw();
+			p_GO.present();
+			iFrame = iFrame + 1;
+		end; 
+		
+	# same dynamics, but for a noGo event
+	else # NOGO
+		noGoCounter = noGoCounter + 1;
+
+		goShape.set_fill_color(0,iBrightnessOffset,0,255);
+		goShape.redraw();
+		p_NOGO.present();
+		
+		MEG_trigger_port.send_code(iTriggerNoGo, iTriggerDuration);
+		OPM_trigger_port.send_code(iTriggerNoGo, iTriggerDuration);
+		
+		loop int iFrame = 1 until iFrame > iNumberOfFrames begin
+			noGoShape.set_fill_color(0,iBrightnessGo[iFrame],0,255);
+			noGoShape.redraw();
+			p_NOGO.present();
+			iFrame = iFrame + 1;
+		end;
+	end;
+	
+	p_fx.present();
+	wait_interval(iISI); # wait interval
+
+	#short break with KSS at half of the trials
+	if noGoCounter > 1 then
+		if noGoCounter % (iNumberOfTrials/2) == 0 then # if the remainder of iNumberOfTrials/2 == 0, then KSS break
+			kss_routine(language);
+			ShowInstructions( "Press a button on every trial when the triangle is pointing upwards.",
+									"Do not press when the triangle is pointing downwards.", " " );
+			noGoCounter = noGoCounter + 1;
+		end;
+	end;
+	
+	iTrial = iTrial + 1;
+
+
+end; #trial loop
+kss_routine(language); # KSS at the end of the experiment
+
+
+
+
